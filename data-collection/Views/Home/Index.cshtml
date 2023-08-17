@@ -1,8 +1,64 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model data_collection.Models.Widget
+
+@{
+    ViewBag.Title = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<h2>Data Entry</h2>
+
+@using (Html.BeginForm("Create", "Home", FormMethod.Post))
+{
+    <div class="form-group">
+        @Html.LabelFor(model => model.Name)
+        @Html.TextBoxFor(model => model.Name, new { @class = "form-control" + (ViewData.ModelState["Name"]?.Errors.Count > 0 ? " is-invalid" : "") })
+        @Html.ValidationMessageFor(model => model.Name, "", new { @class = "invalid-feedback" })
+    </div>
+    <div class="form-group">
+        @* Creation Date is displayed, no input needed *@
+        @Html.LabelFor(model => model.CreationDate)
+        <div>
+            @DateTime.Now.ToString("yyyy-MM-dd")
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(model => model.Type)
+        @Html.DropDownListFor(model => model.Type, new SelectList(new[] { "A", "B", "1", "2" }), new { @class = "form-control", id = "TypeDropdown" })
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(model => model.SubType)
+        @* SubType dropdown will be populated dynamically *@
+        <select id="SubTypeDropdown" name="SubType" class="form-control"></select>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+}
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            // Initialize selectedType with the default value
+            var selectedType = $("#TypeDropdown").val();
+
+            // Function to load subtypes based on selected type
+            function loadSubTypes(type) {
+                $.get('@Url.Action("GetSubTypes", "Home")', { type: type }, function (data) {
+                    $("#SubTypeDropdown").empty();
+                    $.each(data, function (index, item) {
+                        // Append options to the SubTypeDropdown
+                        $("#SubTypeDropdown").append($('<option>').text(item).val(item));
+                    });
+                });
+            }
+
+            // Load subtypes when the page loads
+            loadSubTypes(selectedType);
+
+            // Event listener for TypeDropdown changes
+            $("#TypeDropdown").change(function () {
+                // Update selectedType with the new value
+                selectedType = $(this).val();
+                // Load corresponding subtypes
+                loadSubTypes(selectedType);
+            });
+        });
+    </script>
+}
